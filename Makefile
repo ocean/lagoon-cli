@@ -38,6 +38,8 @@ build-linux:
 	GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOCMD) build -ldflags '${LDFLAGS} -X "${PKG}/cmd.lagoonCLIBuildGoVersion=${GO_VER}"' -o builds/lagoon-cli-${VERSION}-linux-amd64 -v
 build-darwin:
 	GO111MODULE=on CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GOCMD) build -ldflags '${LDFLAGS} -X "${PKG}/cmd.lagoonCLIBuildGoVersion=${GO_VER}"' -o builds/lagoon-cli-${VERSION}-darwin-amd64 -v
+build-darwin-arm:	
+	GO111MODULE=on CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 $(GOCMD) build -ldflags '${LDFLAGS} -X "${PKG}/cmd.lagoonCLIBuildGoVersion=${GO_VER}"' -o builds/lagoon-cli-${VERSION}-darwin-arm64 -v
 
 docs: test
 	GO111MODULE=on $(GOCMD) run main.go --docs
@@ -95,6 +97,8 @@ install-linux:
 	cp builds/lagoon-cli-${VERSION}-linux-amd64 ${ARTIFACT_DESTINATION}/lagoon
 install-darwin:
 	cp builds/lagoon-cli-${VERSION}-darwin-amd64 ${ARTIFACT_DESTINATION}/lagoon
+install-darwin-arm:
+	cp builds/lagoon-cli-${VERSION}-darwin-arm64 ${ARTIFACT_DESTINATION}/lagoon
 
 release-patch: 
 	$(eval VERSION=$(shell ${PWD}/increment_ver.sh -p $(shell git describe --abbrev=0 --tags)))
