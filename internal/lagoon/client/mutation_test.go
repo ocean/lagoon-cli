@@ -5,16 +5,15 @@ import (
 	"context"
 	"flag"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"reflect"
 	"testing"
 
-	"github.com/amazeeio/lagoon-cli/internal/lagoon/client"
-	"github.com/amazeeio/lagoon-cli/internal/schema"
 	"github.com/google/uuid"
+	"github.com/uselagoon/lagoon-cli/internal/lagoon/client"
+	"github.com/uselagoon/lagoon-cli/internal/schema"
 )
 
 var update = flag.Bool("update", false, "update .golden files")
@@ -34,19 +33,19 @@ func TestAddProjectRequest(t *testing.T) {
 		t.Run(name, func(tt *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(
 				func(_ http.ResponseWriter, r *http.Request) {
-					requestBody, err := ioutil.ReadAll(r.Body)
+					requestBody, err := io.ReadAll(r.Body)
 					if err != nil {
 						tt.Fatalf("couldn't read request body: %v", err)
 					}
 
 					if *update {
 						tt.Logf("update golden file: %s", tc.expect)
-						if err = ioutil.WriteFile(tc.expect, requestBody, 0644); err != nil {
+						if err = os.WriteFile(tc.expect, requestBody, 0644); err != nil {
 							tt.Fatalf("failed to update golden file: %v", err)
 						}
 					}
 
-					expected, err := ioutil.ReadFile(tc.expect)
+					expected, err := os.ReadFile(tc.expect)
 					if err != nil {
 						tt.Fatalf("couldn't read file: %v", err)
 					}

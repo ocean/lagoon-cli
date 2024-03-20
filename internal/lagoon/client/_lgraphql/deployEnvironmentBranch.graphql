@@ -1,11 +1,17 @@
 mutation (
   $project: String!, 
-  $branch: String!) {
+  $branch: String!, 
+  $branchRef: String,
+  $returnData: Boolean!,
+  $buildVariables: [EnvKeyValueInput]) {
     deployEnvironmentBranch(input: {
       project:{
         name: $project
       }
       branchName: $branch
+      branchRef: $branchRef
+      returnData: $returnData
+      buildVariables: $buildVariables
     }
   )
 }

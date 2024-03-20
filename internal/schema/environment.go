@@ -1,6 +1,6 @@
 package schema
 
-import "github.com/amazeeio/lagoon-cli/pkg/api"
+import "github.com/uselagoon/lagoon-cli/pkg/api"
 
 // AddEnvironmentInput is based on the input to
 // addOrUpdateEnvironment.
@@ -23,6 +23,8 @@ type Environment struct {
 	EnvVariables []EnvKeyValue `json:"envVariables,omitempty"`
 	Route        string        `json:"route,omitempty"`
 	Routes       string        `json:"routes,omitempty"`
+	Backups      []Backup      `json:"backups,omitempty"`
+	DeployTarget DeployTarget  `json:"openshift,omitempty"`
 	// TODO use a unixtime type
 	Updated string `json:"updated,omitempty"`
 	Created string `json:"created,omitempty"`

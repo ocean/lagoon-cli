@@ -2,15 +2,15 @@ DIR := $(PWD)
 GOCMD=go
 
 ARTIFACT_NAME=lagoon
-ARTIFACT_DESTINATION=$(GOPATH)/bin
+ARTIFACT_DESTINATION ?= $(GOPATH)/bin
 
-PKG=github.com/amazeeio/lagoon-cli
+PKG=github.com/uselagoon/lagoon-cli
 PKGMODPATH=$(DIR)/vendor
 
-VERSION=$(shell ${PWD}/increment_ver.sh -p $(shell git describe --abbrev=0 --tags))-rc
+VERSION=$(shell echo $(shell git describe --abbrev=0 --tags)+$(shell git rev-parse --short=8 HEAD))
 BUILD=$(shell date +%FT%T%z)
 
-DOCKER_GO_VER=1.14
+DOCKER_GO_VER=1.21
 GO_VER=$(shell go version)
 LDFLAGS=-w -s -X ${PKG}/cmd.lagoonCLIVersion=${VERSION} -X ${PKG}/cmd.lagoonCLIBuild=${BUILD}
 
@@ -20,28 +20,28 @@ all: deps test build docs
 all-docker-linux: deps-docker test-docker build-docker-linux
 all-docker-darwin: deps-docker test-docker build-docker-darwin
 
-deps:
+gen: deps
+	GO111MODULE=on $(GOCMD) generate ./...
+deps: 
 	GO111MODULE=on ${GOCMD} get -v
-test:
+test: gen
 	GO111MODULE=on $(GOCMD) fmt ./...
 	GO111MODULE=on $(GOCMD) vet ./...
 	GO111MODULE=on $(GOCMD) test -v ./...
-gen:
-	GO111MODULE=on $(GOCMD) generate ./...
 
 clean:
 	$(GOCMD) clean
 
-build:
+build: test
 	GO111MODULE=on CGO_ENABLED=0 $(GOCMD) build -ldflags '${LDFLAGS} -X "${PKG}/cmd.lagoonCLIBuildGoVersion=${GO_VER}"' -o ${ARTIFACT_DESTINATION}/${ARTIFACT_NAME} -v
-build-linux:
+build-linux: test
 	GO111MODULE=on CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOCMD) build -ldflags '${LDFLAGS} -X "${PKG}/cmd.lagoonCLIBuildGoVersion=${GO_VER}"' -o builds/lagoon-cli-${VERSION}-linux-amd64 -v
-build-darwin:
+build-darwin: test
 	GO111MODULE=on CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 $(GOCMD) build -ldflags '${LDFLAGS} -X "${PKG}/cmd.lagoonCLIBuildGoVersion=${GO_VER}"' -o builds/lagoon-cli-${VERSION}-darwin-amd64 -v
 build-darwin-arm:	
 	GO111MODULE=on CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 $(GOCMD) build -ldflags '${LDFLAGS} -X "${PKG}/cmd.lagoonCLIBuildGoVersion=${GO_VER}"' -o builds/lagoon-cli-${VERSION}-darwin-arm64 -v
 
-docs: test
+docs: test build
 	GO111MODULE=on $(GOCMD) run main.go --docs
 
 tidy:

@@ -6,14 +6,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
+	"strings"
 
-	"github.com/amazeeio/lagoon-cli/internal/lagoon"
-	"github.com/amazeeio/lagoon-cli/internal/lagoon/client"
-	"github.com/amazeeio/lagoon-cli/pkg/api"
-	"github.com/amazeeio/lagoon-cli/pkg/output"
 	"github.com/spf13/cobra"
+	"github.com/uselagoon/lagoon-cli/pkg/api"
+	"github.com/uselagoon/lagoon-cli/pkg/output"
+
+	l "github.com/uselagoon/machinery/api/lagoon"
+	lclient "github.com/uselagoon/machinery/api/lagoon/client"
 )
 
 var getTaskByID = &cobra.Command{
@@ -42,13 +43,13 @@ var getTaskByID = &cobra.Command{
 			return fmt.Errorf("Missing arguments: ID is not defined")
 		}
 		current := lagoonCLIConfig.Current
-		lc := client.New(
+		token := lagoonCLIConfig.Lagoons[current].Token
+		lc := lclient.New(
 			lagoonCLIConfig.Lagoons[current].GraphQL,
-			lagoonCLIConfig.Lagoons[current].Token,
-			lagoonCLIConfig.Lagoons[current].Version,
 			lagoonCLIVersion,
+			&token,
 			debug)
-		result, err := lagoon.TaskByID(context.TODO(), taskID, lc)
+		result, err := l.TaskByID(context.TODO(), taskID, lc)
 		if err != nil {
 			return err
 		}
@@ -101,13 +102,13 @@ If the task fails or fails to update, contact your Lagoon administrator for assi
 		}
 		if yesNo(fmt.Sprintf("You are attempting to run the active/standby switch for project '%s', are you sure?", cmdProjectName)) {
 			current := lagoonCLIConfig.Current
-			lc := client.New(
+			token := lagoonCLIConfig.Lagoons[current].Token
+			lc := lclient.New(
 				lagoonCLIConfig.Lagoons[current].GraphQL,
-				lagoonCLIConfig.Lagoons[current].Token,
-				lagoonCLIConfig.Lagoons[current].Version,
 				lagoonCLIVersion,
+				&token,
 				debug)
-			result, err := lagoon.ActiveStandbySwitch(context.TODO(), cmdProjectName, lc)
+			result, err := l.ActiveStandbySwitch(context.TODO(), cmdProjectName, lc)
 			if err != nil {
 				return err
 			}
@@ -188,6 +189,35 @@ var runDrushCacheClear = &cobra.Command{
 	},
 }
 
+var invokeDefinedTask = &cobra.Command{
+	Use:     "invoke",
+	Aliases: []string{"i"},
+	Short:   "",
+	Long: `Invoke a task registered against an environment
+The following are supported methods to use
+Direct:
+ lagoon run invoke -p example -e main -N "advanced task name"
+`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if cmdProjectName == "" || cmdProjectEnvironment == "" || invokedTaskName == "" {
+			fmt.Println("Missing arguments: Project name, environment name, or task command are not defined")
+			cmd.Help()
+			os.Exit(1)
+		}
+
+		taskResult, err := eClient.InvokeAdvancedTaskDefinition(cmdProjectName, cmdProjectEnvironment, invokedTaskName)
+		handleError(err)
+		var resultMap map[string]interface{}
+		err = json.Unmarshal([]byte(taskResult), &resultMap)
+		handleError(err)
+		resultData := output.Result{
+			Result:     "success",
+			ResultData: resultMap,
+		}
+		output.RenderResult(resultData, outputOptions)
+	},
+}
+
 var runCustomTask = &cobra.Command{
 	Use:     "custom",
 	Aliases: []string{"c"},
@@ -219,7 +249,7 @@ Path:
 		} else {
 			// otherwise we can read from a file
 			if taskCommandFile != "" {
-				taskCommandBytes, err := ioutil.ReadFile(taskCommandFile) // just pass the file name
+				taskCommandBytes, err := os.ReadFile(taskCommandFile) // just pass the file name
 				handleError(err)
 				taskCommand = string(taskCommandBytes)
 			}
@@ -248,14 +278,77 @@ Path:
 	},
 }
 
+var uploadFilesToTask = &cobra.Command{
+	Use:     "task-files",
+	Short:   "Upload files to a task by its ID",
+	Long:    `Upload files to a task by its ID`,
+	Aliases: []string{"tf"},
+	PreRunE: func(_ *cobra.Command, _ []string) error {
+		return validateTokenE(lagoonCLIConfig.Current)
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		debug, err := cmd.Flags().GetBool("debug")
+		if err != nil {
+			return err
+		}
+
+		taskID, err := cmd.Flags().GetInt("id")
+		if err != nil {
+			return err
+		}
+		if taskID == 0 {
+			return fmt.Errorf("Missing arguments: ID is not defined")
+		}
+		files, err := cmd.Flags().GetStringSlice("file")
+		if err != nil {
+			return err
+		}
+		current := lagoonCLIConfig.Current
+		token := lagoonCLIConfig.Lagoons[current].Token
+		lc := lclient.New(
+			lagoonCLIConfig.Lagoons[current].GraphQL,
+			lagoonCLIVersion,
+			&token,
+			debug)
+		result, err := l.UploadFilesForTask(context.TODO(), taskID, files, lc)
+		if err != nil {
+			return err
+		}
+		taskFiles := []string{}
+		for _, f := range result.Files {
+			taskFiles = append(taskFiles, f.Filename)
+		}
+		dataMain := output.Table{
+			Header: []string{
+				"ID",
+				"Name",
+				"Files",
+			},
+			Data: []output.Data{
+				{
+					fmt.Sprintf("%d", result.ID),
+					returnNonEmptyString(result.Name),
+					returnNonEmptyString(strings.Join(taskFiles, ",")),
+				},
+			},
+		}
+		output.RenderOutput(dataMain, outputOptions)
+		return nil
+	},
+}
+
 var (
 	taskName        string
+	invokedTaskName string
 	taskService     string
 	taskCommand     string
 	taskCommandFile string
 )
 
 func init() {
+	uploadFilesToTask.Flags().IntP("id", "I", 0, "ID of the task")
+	uploadFilesToTask.Flags().StringSliceP("file", "F", []string{}, "File to upload (add multiple flags to upload multiple files)")
+	invokeDefinedTask.Flags().StringVarP(&invokedTaskName, "name", "N", "", "Name of the task that will be invoked")
 	runCustomTask.Flags().StringVarP(&taskName, "name", "N", "Custom Task", "Name of the task that will show in the UI (default: Custom Task)")
 	runCustomTask.Flags().StringVarP(&taskService, "service", "S", "cli", "Name of the service (cli, nginx, other) that should run the task (default: cli)")
 	runCustomTask.Flags().StringVarP(&taskCommand, "command", "c", "", "The command to run in the task")

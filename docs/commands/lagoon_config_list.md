@@ -2,10 +2,6 @@
 
 View all configured Lagoon instances
 
-### Synopsis
-
-View all configured Lagoon instances
-
 ```
 lagoon config list [flags]
 ```
@@ -13,7 +9,8 @@ lagoon config list [flags]
 ### Options
 
 ```
-  -h, --help   help for list
+  -h, --help        help for list
+      --show-full   Show full config output when listing Lagoon configurations
 ```
 
 ### Options inherited from parent commands

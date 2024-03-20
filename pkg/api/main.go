@@ -1,23 +1,18 @@
 package api
 
 import (
-	//"bytes"
 	"context"
 	"fmt"
 	"strings"
 
-	//"errors"
-	//"fmt"
-	//"io/ioutil"
 	"net/http"
 	"regexp"
 
-	//"strings"
 	"crypto/tls"
 	"encoding/json"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"github.com/logrusorgru/aurora"
 	"github.com/machinebox/graphql"
 )
@@ -72,7 +67,6 @@ type Client interface {
 	GetAllProjects(string) ([]byte, error)
 	GetRocketChatInfoForProject(Project, string) ([]byte, error)
 	GetSlackInfoForProject(Project, string) ([]byte, error)
-	GetActiveSystemForProject(Project, string) ([]byte, error)
 	GetEnvironmentsForProject(Project) ([]byte, error)
 	GetDeploymentByRemoteID(Deployment) ([]byte, error)
 	AddDeployment(Deployment) ([]byte, error)

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/amazeeio/lagoon-cli/pkg/api"
-	"github.com/amazeeio/lagoon-cli/pkg/graphql"
-	"github.com/amazeeio/lagoon-cli/pkg/output"
+	"github.com/uselagoon/lagoon-cli/pkg/api"
+	"github.com/uselagoon/lagoon-cli/pkg/graphql"
+	"github.com/uselagoon/lagoon-cli/pkg/output"
 )
 
 // AddEnvironmentVariableToEnvironment will list all environments for a project
@@ -129,7 +129,7 @@ func (e *Environments) ListEnvironmentVariables(projectName string, environmentN
 	project := api.Project{
 		Name: projectName,
 	}
-	projectByName, err := e.api.GetProjectByName(project, graphql.ProjectEnvironmentEnvVars)
+	projectByName, err := e.api.GetProjectByName(project, graphql.ProjectByNameMinimalFragment)
 	if err != nil {
 		return []byte(""), err
 	}
@@ -138,6 +138,7 @@ func (e *Environments) ListEnvironmentVariables(projectName string, environmentN
 	if err != nil {
 		return []byte(""), err
 	}
+	// get the environment info from lagoon, we consume the project ID here
 	environment := api.EnvironmentByName{
 		Name:    environmentName,
 		Project: projectInfo.ID,
@@ -150,19 +151,16 @@ func (e *Environments) ListEnvironmentVariables(projectName string, environmentN
 	if err != nil {
 		return []byte(""), err
 	}
-	returnResult, err := processEnvironmentVariables(environmentByName, projectName, revealValue)
+	var environmentInfo api.Environment
+	err = json.Unmarshal([]byte(environmentByName), &environmentInfo)
+	returnResult, err := processEnvironmentVariables(environmentInfo, projectName, revealValue)
 	if err != nil {
 		return []byte(""), err
 	}
 	return returnResult, nil
 }
 
-func processEnvironmentVariables(environmentByName []byte, projectName string, revealValue bool) ([]byte, error) {
-	var envVars api.Environment
-	err := json.Unmarshal([]byte(environmentByName), &envVars)
-	if err != nil {
-		return []byte(""), err
-	}
+func processEnvironmentVariables(envVars api.Environment, projectName string, revealValue bool) ([]byte, error) {
 	data := []output.Data{}
 	if len(envVars.EnvVariables) != 0 {
 		for _, environmentEnvVar := range envVars.EnvVariables {

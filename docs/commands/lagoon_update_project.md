@@ -2,10 +2,6 @@
 
 Update a project
 
-### Synopsis
-
-Update a project
-
 ```
 lagoon update project [flags]
 ```
@@ -13,14 +9,11 @@ lagoon update project [flags]
 ### Options
 
 ```
-  -D, --activeSystemsDeploy string            Which internal Lagoon System is responsible for deploying 
-  -M, --activeSystemsMisc string              Which internal Lagoon System is responsible for miscellaneous tasks
-  -P, --activeSystemsPromote string           Which internal Lagoon System is responsible for promoting
-  -R, --activeSystemsRemove string            Which internal Lagoon System is responsible for removing
-  -T, --activeSystemsTask string              Which internal Lagoon System is responsible for tasks
   -a, --autoIdle int                          Auto idle setting of the project
   -b, --branches string                       Which branches should be deployed
+      --deploymentsDisabled int               Admin only flag for disabling deployments on a project, 1 to disable deployments, 0 to enable
   -L, --developmentEnvironmentsLimit int      How many environments can be deployed at one time
+      --factsUi int                           Enables the Lagoon insights Facts tab in the UI. Set to 1 to enable, 0 to disable
   -g, --gitUrl string                         GitURL of the project
   -h, --help                                  help for project
   -j, --json string                           JSON string to patch
@@ -28,8 +21,10 @@ lagoon update project [flags]
   -S, --openshift int                         Reference to OpenShift Object this Project should be deployed to
   -o, --openshiftProjectPattern string        Pattern of OpenShift Project/Namespace that should be generated
   -I, --privateKey string                     Private key to use for the project
+      --problemsUi int                        Enables the Lagoon insights Problems tab in the UI. Set to 1 to enable, 0 to disable
   -E, --productionEnvironment string          Which environment(the name) should be marked as the production environment
   -m, --pullrequests string                   Which Pull Requests should be deployed
+  -Z, --routerPattern string                  Router pattern of the project, e.g. '${service}-${environment}-${project}.lagoon.example.com'
       --standbyProductionEnvironment string   Which environment(the name) should be marked as the standby production environment
   -C, --storageCalc int                       Should storage for this environment be calculated
   -s, --subfolder string                      Set if the .lagoon.yml should be found in a subfolder useful if you have multiple Lagoon projects per Git Repository

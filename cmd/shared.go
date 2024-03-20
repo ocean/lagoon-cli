@@ -1,10 +1,10 @@
 package cmd
 
 import (
+	"fmt"
+	"github.com/uselagoon/lagoon-cli/pkg/output"
 	"os"
 	"strings"
-
-	"github.com/amazeeio/lagoon-cli/pkg/output"
 )
 
 // config vars
@@ -14,6 +14,7 @@ var lagoonGraphQL string
 var lagoonToken string
 var lagoonUI string
 var lagoonKibana string
+var lagoonSSHKey string
 
 // variable vars
 var variableValue string
@@ -27,6 +28,11 @@ var userEmail string
 var pubKeyFile string
 var nameInPubKeyFile bool
 var sshKeyName string
+
+// openshift vars
+var osName string
+var osConsoleUrl string
+var osToken string
 
 // group vars
 var groupName string
@@ -84,4 +90,32 @@ func fileExists(filename string) bool {
 
 func stripNewLines(stripString string) string {
 	return strings.TrimSuffix(stripString, "\n")
+}
+
+func nullStrCheck(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
+func nullUintCheck(i uint) *uint {
+	if i == 0 {
+		return nil
+	}
+	return &i
+}
+
+func nullIntCheck(i int) *int {
+	if i == 0 {
+		return nil
+	}
+	return &i
+}
+
+func requiredInputCheck(field string, value string) error {
+	if value == "" || value == "0" {
+		return fmt.Errorf(fmt.Sprintf("Missing argument: %s is not defined", field))
+	}
+	return nil
 }

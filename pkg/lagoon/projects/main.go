@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/amazeeio/lagoon-cli/internal/lagoon"
-	"github.com/amazeeio/lagoon-cli/pkg/api"
-	"github.com/amazeeio/lagoon-cli/pkg/graphql"
-	"github.com/amazeeio/lagoon-cli/pkg/output"
-	"golang.org/x/crypto/ssh"
+	"github.com/uselagoon/lagoon-cli/internal/lagoon"
+	"github.com/uselagoon/lagoon-cli/pkg/api"
+	"github.com/uselagoon/lagoon-cli/pkg/graphql"
+	"github.com/uselagoon/lagoon-cli/pkg/output"
 )
 
 // Projects .
@@ -21,24 +20,9 @@ type Projects struct {
 // Client .
 type Client interface {
 	ListAllProjects() ([]byte, error)
-	ListEnvironmentsForProject(string) ([]byte, error)
 	ListProjectVariables(string, bool) ([]byte, error)
 	GetProjectKey(string, bool) ([]byte, error)
 	GetProjectInfo(string) ([]byte, error)
-	ListAllRocketChats() ([]byte, error)
-	ListProjectRocketChats(string) ([]byte, error)
-	ListAllSlacks() ([]byte, error)
-	ListProjectSlacks(string) ([]byte, error)
-	AddRocketChatNotification(string, string, string) ([]byte, error)
-	AddRocketChatNotificationToProject(string, string) ([]byte, error)
-	DeleteRocketChatNotificationFromProject(string, string) ([]byte, error)
-	UpdateRocketChatNotification(string, string) ([]byte, error)
-	DeleteRocketChatNotification(string) ([]byte, error)
-	AddSlackNotification(string, string, string) ([]byte, error)
-	AddSlackNotificationToProject(string, string) ([]byte, error)
-	DeleteSlackNotificationFromProject(string, string) ([]byte, error)
-	UpdateSlackNotification(string, string) ([]byte, error)
-	DeleteSlackNotification(string) ([]byte, error)
 	DeleteProject(string) ([]byte, error)
 	AddProject(string, string) ([]byte, error)
 	UpdateProject(string, string) ([]byte, error)
@@ -138,7 +122,7 @@ func processProjectInfo(projectByName []byte) ([]byte, error) {
 	var data []output.Data
 	data = append(data, projectData)
 	dataMain := output.Table{
-		Header: []string{"ID", "ProjectName", "GitURL", "Branches", "PullRequests", "ProductionRoute", "DevEnvironments", "DevEnvLimit", "ProductionEnv", "AutoIdle"},
+		Header: []string{"ID", "ProjectName", "GitURL", "Branches", "PullRequests", "ProductionRoute", "DevEnvironments", "DevEnvLimit", "ProductionEnv", "RouterPattern", "AutoIdle", "FactsUI", "ProblemsUI"},
 		Data:   data,
 	}
 	return json.Marshal(dataMain)
@@ -166,62 +150,12 @@ func processProjectExtra(project api.Project) []string {
 		fmt.Sprintf("%v/%v", currentDevEnvironments, project.DevelopmentEnvironmentsLimit),
 		fmt.Sprintf("%v", project.DevelopmentEnvironmentsLimit),
 		fmt.Sprintf("%v", project.ProductionEnvironment),
+		fmt.Sprintf("%s", project.RouterPattern),
 		fmt.Sprintf("%v", *project.AutoIdle),
+		fmt.Sprintf("%v", *project.FactsUI),
+		fmt.Sprintf("%v", *project.ProblemsUI),
 	}
 	return data
-}
-
-// ListEnvironmentsForProject will list all environments for a project
-func (p *Projects) ListEnvironmentsForProject(projectName string) ([]byte, error) {
-	// get project info from lagoon
-	project := api.Project{
-		Name: projectName,
-	}
-	projectByName, err := p.api.GetProjectByName(project, graphql.ProjectByNameFragment)
-	if err != nil {
-		return []byte(""), err
-	}
-	returnResult, err := processEnvironmentsList(projectByName)
-	if err != nil {
-		return []byte(""), err
-	}
-	return returnResult, nil
-}
-
-func processEnvironmentsList(projectByName []byte) ([]byte, error) {
-	var projects api.Project
-	err := json.Unmarshal([]byte(projectByName), &projects)
-	if err != nil {
-		return []byte(""), err
-	}
-	// count the current dev environments in a project
-	var currentDevEnvironments = 0
-	for _, environment := range projects.Environments {
-		if environment.EnvironmentType == "development" {
-			currentDevEnvironments++
-		}
-	}
-	// process the data for output
-	data := []output.Data{}
-	for _, environment := range projects.Environments {
-		var envRoute = "none"
-		if environment.Route != "" {
-			envRoute = environment.Route
-		}
-		data = append(data, []string{
-			fmt.Sprintf("%d", environment.ID),
-			environment.Name,
-			string(environment.DeployType),
-			string(environment.EnvironmentType),
-			string(environment.OpenshiftProjectName),
-			envRoute,
-		})
-	}
-	dataMain := output.Table{
-		Header: []string{"ID", "Name", "DeployType", "Environment", "OpenshiftProjectName", "Route"}, //, "SSH"},
-		Data:   data,
-	}
-	return json.Marshal(dataMain)
 }
 
 // AddProject .
@@ -273,7 +207,7 @@ func processProjectUpdate(projectByName []byte, jsonPatch string) (api.UpdatePro
 	var projects api.Project
 	var projectUpdate api.UpdateProject
 	var project api.ProjectPatch
-	err := json.Unmarshal([]byte(projectByName), &projects)
+	err := json.Unmarshal(projectByName, &projects)
 	if err != nil {
 		return projectUpdate, err
 	}
@@ -298,8 +232,14 @@ func (p *Projects) GetProjectKey(projectName string, revealValue bool) ([]byte, 
 		Name: projectName,
 	}
 	keyFragment := `fragment Project on Project {
-		privateKey
+		publicKey
 	}`
+	if revealValue {
+		keyFragment = `fragment Project on Project {
+			privateKey
+			publicKey
+		}`
+	}
 	projectByName, err := p.api.GetProjectByName(project, keyFragment)
 	if err != nil {
 		return []byte(""), err
@@ -317,15 +257,9 @@ func processProjectKey(projectByName []byte, revealValue bool) ([]byte, error) {
 	if err != nil {
 		return []byte(""), err
 	}
-	signer, err := ssh.ParsePrivateKey([]byte(project.PrivateKey))
-	if err != nil {
-		fmt.Println("Error was:", err.Error())
-		return []byte(""), err
-	}
-	publicKey := signer.PublicKey()
 	// get the key, but strip the newlines we don't need
 	projectData := []string{
-		strings.TrimSuffix(string(ssh.MarshalAuthorizedKey(publicKey)), "\n"),
+		strings.TrimSuffix(project.PublicKey, "\n"),
 	}
 	if revealValue {
 		projectData = append(projectData, strings.TrimSuffix(project.PrivateKey, "\n"))

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/amazeeio/lagoon-cli/internal/lagoon"
-	"github.com/amazeeio/lagoon-cli/pkg/api"
-	"github.com/amazeeio/lagoon-cli/pkg/graphql"
-	"github.com/amazeeio/lagoon-cli/pkg/output"
+	"github.com/uselagoon/lagoon-cli/internal/lagoon"
+	"github.com/uselagoon/lagoon-cli/pkg/api"
+	"github.com/uselagoon/lagoon-cli/pkg/graphql"
+	"github.com/uselagoon/lagoon-cli/pkg/output"
 )
 
 // Environments .
@@ -33,6 +33,8 @@ type Client interface {
 	AddEnvironmentVariableToEnvironment(string, string, api.EnvVariable) ([]byte, error)
 	DeleteEnvironmentVariableFromEnvironment(string, string, api.EnvVariable) ([]byte, error)
 	PromoteEnvironment(string, string, string) ([]byte, error)
+	InvokeAdvancedTaskDefinition(string, string, string) ([]byte, error)
+	ListInvokableAdvancedTaskDefinitions(string, string) ([]byte, error)
 }
 
 // New .
@@ -130,7 +132,7 @@ func processEnvInfo(projectByName []byte) ([]byte, error) {
 	var data []output.Data
 	data = append(data, environmentData)
 	dataMain := output.Table{
-		Header: []string{"ID", "EnvironmentName", "EnvironmentType", "DeployType", "Created", "OpenshiftProjectName", "Route", "Routes", "MonitoringURLS", "AutoIdle", "DeployTitle", "DeployBaseRef", "DeployHeadRef"},
+		Header: []string{"ID", "EnvironmentName", "EnvironmentType", "DeployType", "Created", "OpenshiftProjectName", "Route", "Routes", "AutoIdle", "DeployTitle", "DeployBaseRef", "DeployHeadRef"},
 		Data:   data,
 	}
 	return json.Marshal(dataMain)
@@ -145,7 +147,6 @@ func processEnvExtra(environment api.Environment) []string {
 	envOpenshiftProjectName := returnNonEmptyString(string(environment.OpenshiftProjectName))
 	envRoute := returnNonEmptyString(string(environment.Route))
 	envRoutes := returnNonEmptyString(string(environment.Routes))
-	envMonitoringUrls := returnNonEmptyString(string(environment.MonitoringUrls))
 	envDeployTitle := returnNonEmptyString(string(environment.DeployTitle))
 	envDeployBaseRef := returnNonEmptyString(string(environment.DeployBaseRef))
 	envDeployHeadRef := returnNonEmptyString(string(environment.DeployHeadRef))
@@ -159,7 +160,6 @@ func processEnvExtra(environment api.Environment) []string {
 		fmt.Sprintf("%v", envOpenshiftProjectName),
 		fmt.Sprintf("%v", envRoute),
 		fmt.Sprintf("%v", envRoutes),
-		fmt.Sprintf("%v", envMonitoringUrls),
 		fmt.Sprintf("%v", envAutoIdle),
 		fmt.Sprintf("%v", envDeployTitle),
 		fmt.Sprintf("%v", envDeployBaseRef),

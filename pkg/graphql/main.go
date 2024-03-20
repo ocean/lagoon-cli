@@ -1,9 +1,9 @@
 package graphql
 
 import (
-	"github.com/amazeeio/lagoon-cli/internal/lagoon"
-	"github.com/amazeeio/lagoon-cli/pkg/api"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
+	"github.com/uselagoon/lagoon-cli/internal/lagoon"
+	"github.com/uselagoon/lagoon-cli/pkg/api"
 )
 
 // LagoonAPI .
@@ -47,9 +47,21 @@ var ProjectByNameFragment = `fragment Project on Project {
 	name
 	gitUrl
 	subfolder
+	routerPattern
 	branches
 	pullrequests
+	problemsUi
+	factsUi
 	productionEnvironment
+	deployTargetConfigs{
+		id
+		deployTarget{
+		  id
+		  name
+		  token
+		}
+		
+	  }
 	environments {
 		id
 		name
@@ -61,6 +73,12 @@ var ProjectByNameFragment = `fragment Project on Project {
 	autoIdle
 	storageCalc
 	developmentEnvironmentsLimit
+}`
+
+// ProjectByNameMinimalFragment .
+var ProjectByNameMinimalFragment = `fragment Project on Project {
+	id
+	name
 }`
 
 // ProjectAndEnvironmentEnvVars .
@@ -94,6 +112,22 @@ var ProjectEnvironmentEnvVars = `fragment Project on Project {
 			id
 			name
 			scope
+		}
+	}
+}`
+
+// ProjectEnvironmentEnvVarsRevealed .
+var ProjectEnvironmentEnvVarsRevealed = `fragment Project on Project {
+	id
+	name
+	environments {
+		openshiftProjectName
+		name
+		envVariables {
+			id
+			name
+			scope
+			value
 		}
 	}
 }`
@@ -134,29 +168,6 @@ var ProjectEnvVars = `fragment Project on Project {
 // ProjectEnvVarsRevealed .
 var ProjectEnvVarsRevealed = `fragment Project on Project {
 	id
-	name
-	envVariables {
-		id
-		name
-		scope
-		value
-	}
-}`
-
-// EnvironmentEnvVars .
-var EnvironmentEnvVars = `fragment Environment on Environment {
-	openshiftProjectName
-	name
-	envVariables {
-		id
-		name
-		scope
-	}
-}`
-
-// EnvironmentEnvVarsRevealed .
-var EnvironmentEnvVarsRevealed = `fragment Environment on Environment {
-	openshiftProjectName
 	name
 	envVariables {
 		id
@@ -207,6 +218,29 @@ var EnvironmentVariablesFragment = `fragment Environment on Environment {
 	}
 }`
 
+// EnvironmentEnvVars .
+var EnvironmentEnvVars = `fragment Environment on Environment {
+	id
+	name
+	envVariables {
+		id
+		name
+		scope
+	}
+}`
+
+// EnvironmentEnvVarsRevealed .
+var EnvironmentEnvVarsRevealed = `fragment Environment on Environment {
+	id
+	name
+	envVariables {
+		id
+		name
+		scope
+		value
+	}
+}`
+
 // ProjectNameID .
 var ProjectNameID = `fragment Project on Project {
 	id
@@ -225,7 +259,6 @@ var EnvironmentByNameFragment = `fragment Environment on Environment {
 	updated
 	created
 	deleted
-	monitoringUrls
 	deployTitle
 	deployBaseRef
 	deployHeadRef

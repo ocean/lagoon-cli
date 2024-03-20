@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/amazeeio/lagoon-cli/internal/lagoon"
-	"github.com/amazeeio/lagoon-cli/internal/schema"
+	"github.com/uselagoon/lagoon-cli/internal/lagoon"
+	"github.com/uselagoon/lagoon-cli/internal/schema"
 )
 
 var duplicate = regexp.MustCompile("^graphql: Duplicate entry ")
@@ -18,6 +18,42 @@ func wrapErr(err error) error {
 		return fmt.Errorf("couldn't create object: %w: %v", lagoon.ErrExist, err)
 	}
 	return err
+}
+
+// AddDeployTarget adds a deploytarget (kubernetes/openshift).
+func (c *Client) AddDeployTarget(ctx context.Context, in *schema.AddDeployTargetInput, out *schema.AddDeployTargetResponse) error {
+	req, err := c.newRequest("_lgraphql/addDeployTarget.graphql", in)
+	if err != nil {
+		return err
+	}
+	return c.client.Run(ctx, req, &struct {
+		Response *schema.AddDeployTargetResponse `json:"addDeployTarget"`
+	}{
+		Response: out,
+	})
+}
+
+// UpdateDeployTarget updates a deploytarget (kubernetes/openshift).
+func (c *Client) UpdateDeployTarget(ctx context.Context, in *schema.UpdateDeployTargetInput, out *schema.UpdateDeployTargetResponse) error {
+	req, err := c.newRequest("_lgraphql/updateDeployTarget.graphql", in)
+	if err != nil {
+		return err
+	}
+	return c.client.Run(ctx, req, &struct {
+		Response *schema.UpdateDeployTargetResponse `json:"updateDeployTarget"`
+	}{
+		Response: out,
+	})
+}
+
+// DeleteDeployTarget deletes a deploytarget (kubernetes/openshift).
+func (c *Client) DeleteDeployTarget(ctx context.Context, in *schema.DeleteDeployTargetInput, out *schema.DeleteDeployTargetResponse) error {
+	req, err := c.newRequest("_lgraphql/deleteDeployTarget.graphql", in)
+	if err != nil {
+		return err
+	}
+
+	return c.client.Run(ctx, req, &out)
 }
 
 // AddGroup adds a group.
@@ -71,65 +107,6 @@ func (c *Client) AddUserToGroup(
 	}
 	return c.client.Run(ctx, req, &struct {
 		Response *schema.Group `json:"addUserToGroup"`
-	}{
-		Response: out,
-	})
-}
-
-// AddNotificationSlack defines a Slack notification.
-func (c *Client) AddNotificationSlack(ctx context.Context,
-	in *schema.AddNotificationSlackInput, out *schema.NotificationSlack) error {
-	req, err := c.newRequest("_lgraphql/addNotificationSlack.graphql", in)
-	if err != nil {
-		return err
-	}
-	return c.client.Run(ctx, req, &struct {
-		Response *schema.NotificationSlack `json:"addNotificationSlack"`
-	}{
-		Response: out,
-	})
-}
-
-// AddNotificationRocketChat defines a RocketChat notification.
-func (c *Client) AddNotificationRocketChat(ctx context.Context,
-	in *schema.AddNotificationRocketChatInput,
-	out *schema.NotificationRocketChat) error {
-	req, err := c.newRequest("_lgraphql/addNotificationRocketChat.graphql", in)
-	if err != nil {
-		return err
-	}
-	return c.client.Run(ctx, req, &struct {
-		Response *schema.NotificationRocketChat `json:"addNotificationRocketChat"`
-	}{
-		Response: out,
-	})
-}
-
-// AddNotificationEmail defines an Email notification.
-func (c *Client) AddNotificationEmail(ctx context.Context,
-	in *schema.AddNotificationEmailInput,
-	out *schema.NotificationEmail) error {
-	req, err := c.newRequest("_lgraphql/addNotificationEmail.graphql", in)
-	if err != nil {
-		return err
-	}
-	return c.client.Run(ctx, req, &struct {
-		Response *schema.NotificationEmail `json:"addNotificationEmail"`
-	}{
-		Response: out,
-	})
-}
-
-// AddNotificationMicrosoftTeams defines a MicrosoftTeams notification.
-func (c *Client) AddNotificationMicrosoftTeams(ctx context.Context,
-	in *schema.AddNotificationMicrosoftTeamsInput,
-	out *schema.NotificationMicrosoftTeams) error {
-	req, err := c.newRequest("_lgraphql/addNotificationMicrosoftTeams.graphql", in)
-	if err != nil {
-		return err
-	}
-	return c.client.Run(ctx, req, &struct {
-		Response *schema.NotificationMicrosoftTeams `json:"addNotificationMicrosoftTeams"`
 	}{
 		Response: out,
 	})
@@ -191,48 +168,6 @@ func (c *Client) AddGroupsToProject(ctx context.Context,
 	})
 }
 
-// AddNotificationToProject adds a Notification to a Project.
-func (c *Client) AddNotificationToProject(ctx context.Context,
-	in *schema.AddNotificationToProjectInput, out *schema.Project) error {
-	req, err := c.newRequest("_lgraphql/addNotificationToProject.graphql", in)
-	if err != nil {
-		return err
-	}
-	return c.client.Run(ctx, req, &struct {
-		Response *schema.Project `json:"addNotificationToProject"`
-	}{
-		Response: out,
-	})
-}
-
-// AddBillingGroup adds a Billing Group.
-func (c *Client) AddBillingGroup(ctx context.Context,
-	in *schema.AddBillingGroupInput, out *schema.BillingGroup) error {
-	req, err := c.newRequest("_lgraphql/addBillingGroup.graphql", in)
-	if err != nil {
-		return err
-	}
-	return c.client.Run(ctx, req, &struct {
-		Response *schema.BillingGroup `json:"addBillingGroup"`
-	}{
-		Response: out,
-	})
-}
-
-// AddProjectToBillingGroup adds a Project to a Billing Group.
-func (c *Client) AddProjectToBillingGroup(ctx context.Context,
-	in *schema.ProjectBillingGroupInput, out *schema.Project) error {
-	req, err := c.newRequest("_lgraphql/addProjectToBillingGroup.graphql", in)
-	if err != nil {
-		return err
-	}
-	return c.client.Run(ctx, req, &struct {
-		Response *schema.Project `json:"addProjectToBillingGroup"`
-	}{
-		Response: out,
-	})
-}
-
 // DeployEnvironmentLatest deploys a latest environment.
 func (c *Client) DeployEnvironmentLatest(ctx context.Context,
 	in *schema.DeployEnvironmentLatestInput, out *schema.DeployEnvironmentLatest) error {
@@ -273,20 +208,76 @@ func (c *Client) DeployEnvironmentBranch(ctx context.Context,
 	return c.client.Run(ctx, req, &out)
 }
 
-// RunActiveStandbySwitch deploys a branch.
-func (c *Client) RunActiveStandbySwitch(ctx context.Context,
-	project string, out *schema.Task) error {
-	req, err := c.newVersionedRequest("_lgraphql/switchActiveStandby.graphql", map[string]interface{}{
-		"project": project,
+// AddRestore adds a restore.
+func (c *Client) AddRestore(
+	ctx context.Context, backupID string, out *schema.Restore) error {
+	req, err := c.newRequest("_lgraphql/addRestore.graphql",
+		map[string]interface{}{
+			"backupid": backupID,
+		})
+	if err != nil {
+		return err
+	}
+	return c.client.Run(ctx, req, &struct {
+		Response *schema.Restore `json:"addRestore"`
+	}{
+		Response: out,
 	})
+}
+
+// UpdateDeployTargetConfiguration adds a deploytarget configuration to a project.
+func (c *Client) UpdateDeployTargetConfiguration(ctx context.Context,
+	in *schema.UpdateDeployTargetConfigInput, out *schema.DeployTargetConfig) error {
+	req, err := c.newRequest("_lgraphql/updateDeployTargetConfig.graphql", in)
+	if err != nil {
+		return err
+	}
+	return c.client.Run(ctx, req, &struct {
+		Response *schema.DeployTargetConfig `json:"updateDeployTargetConfig"`
+	}{
+		Response: out,
+	})
+}
+
+// DeleteDeployTargetConfig deletes a deploytarget config from a project.
+func (c *Client) DeleteDeployTargetConfiguration(ctx context.Context,
+	id int, project int, out *schema.DeleteDeployTargetConfig) error {
+	req, err := c.newRequest("_lgraphql/deleteDeployTargetConfig.graphql",
+		map[string]interface{}{
+			"id":      id,
+			"project": project,
+		})
+	if err != nil {
+		return err
+	}
+	return c.client.Run(ctx, req, &out)
+}
+
+// AddOrUpdateEnvVariableByName adds or updates an environment variable in the api
+func (c *Client) AddOrUpdateEnvVariableByName(ctx context.Context, in *schema.EnvVariableByNameInput, out *schema.UpdateEnvVarResponse) error {
+	req, err := c.newRequest("_lgraphql/variables/addOrUpdateEnvVariableByName.graphql",
+		map[string]interface{}{
+			"input": in,
+		})
+	if err != nil {
+		return err
+	}
+	return c.client.Run(ctx, req, &struct {
+		Response *schema.UpdateEnvVarResponse `json:"addOrUpdateEnvVariableByName"`
+	}{
+		Response: out,
+	})
+}
+
+// DeleteEnvVariableByName deletes an environment variable from the api
+func (c *Client) DeleteEnvVariableByName(ctx context.Context, in *schema.DeleteEnvVariableByNameInput, out *schema.DeleteEnvVarResponse) error {
+	req, err := c.newRequest("_lgraphql/variables/deleteEnvVariableByName.graphql",
+		map[string]interface{}{
+			"input": in,
+		})
 	if err != nil {
 		return err
 	}
 
-	// return c.client.Run(ctx, req, &out)
-	return c.client.Run(ctx, req, &struct {
-		Response *schema.Task `json:"switchActiveStandby"`
-	}{
-		Response: out,
-	})
+	return c.client.Run(ctx, req, &out)
 }

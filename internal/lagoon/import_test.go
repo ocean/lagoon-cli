@@ -7,11 +7,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/amazeeio/lagoon-cli/internal/lagoon"
-	"github.com/amazeeio/lagoon-cli/internal/mock"
-	"github.com/amazeeio/lagoon-cli/internal/schema"
-	"github.com/amazeeio/lagoon-cli/pkg/api"
 	"github.com/golang/mock/gomock"
+	"github.com/uselagoon/lagoon-cli/internal/lagoon"
+	"github.com/uselagoon/lagoon-cli/internal/mock"
+	"github.com/uselagoon/lagoon-cli/internal/schema"
+	"github.com/uselagoon/lagoon-cli/pkg/api"
 )
 
 // importCalls stores arrays of expected import calls associated with a given
@@ -32,8 +32,6 @@ type importCalls struct {
 	AddEnvironmentInputs                []schema.AddEnvironmentInput
 	ProjectGroupsInputs                 []schema.ProjectGroupsInput
 	AddNotificationToProjectInputs      []schema.AddNotificationToProjectInput
-	AddBillingGroupInputs               []schema.AddBillingGroupInput
-	ProjectBillingGroupInputs           []schema.ProjectBillingGroupInput
 }
 
 func TestImport(t *testing.T) {
@@ -134,19 +132,19 @@ func TestImport(t *testing.T) {
 				{
 					EnvKeyValue: schema.EnvKeyValue{
 						Name:  "ENABLE_REDIS",
-						Scope: api.GlobalVar,
+						Scope: schema.GlobalVar,
 						Value: "1",
 					},
-					Type: api.ProjectVar,
+					Type: schema.ProjectVar,
 					// NewProjectID
 					TypeID: 99,
 				}, {
 					EnvKeyValue: schema.EnvKeyValue{
 						Name:  "ENABLE_REDIS",
-						Scope: api.BuildVar,
+						Scope: schema.BuildVar,
 						Value: "1",
 					},
-					Type: api.EnvironmentVar,
+					Type: schema.EnvironmentVar,
 					// NewEnvironmentID
 					TypeID: 88,
 				},
@@ -177,19 +175,6 @@ func TestImport(t *testing.T) {
 					Project:          "bananas",
 					NotificationType: api.SlackNotification,
 					NotificationName: "example-slack",
-				},
-			},
-			AddBillingGroupInputs: []schema.AddBillingGroupInput{
-				{
-					Name:            "High Cotton Billing Group",
-					Currency:        schema.USD,
-					BillingSoftware: "Microsoft Billing",
-				},
-			},
-			ProjectBillingGroupInputs: []schema.ProjectBillingGroupInput{
-				{
-					Project: schema.ProjectInput{Name: "bananas"},
-					Group:   schema.GroupInput{Name: "High Cotton Billing Group"},
 				},
 			},
 		}},
@@ -260,14 +245,6 @@ func TestImport(t *testing.T) {
 			for i := range tc.expect.AddNotificationToProjectInputs {
 				importer.EXPECT().AddNotificationToProject(
 					ctx, &tc.expect.AddNotificationToProjectInputs[i], nil)
-			}
-			for i := range tc.expect.AddBillingGroupInputs {
-				importer.EXPECT().AddBillingGroup(ctx,
-					&tc.expect.AddBillingGroupInputs[i], nil)
-			}
-			for i := range tc.expect.ProjectBillingGroupInputs {
-				importer.EXPECT().AddProjectToBillingGroup(ctx,
-					&tc.expect.ProjectBillingGroupInputs[i], nil)
 			}
 			// open the test yaml
 			file, err := os.Open(tc.input)

@@ -30,7 +30,7 @@ func TestAllProjects(t *testing.T) {
 	{"developmentEnvironmentsLimit":5,"environments":[
 		{"environmentType":"production","route":null}],
 		"gitUrl":"ssh://git@192.168.99.1:2222/git/features.git","id":12,"name":"ci-features"},
-	{"developmentEnvironmentsLimit":5,"environments":[],"gitUrl":"git@github.com:amazeeio/lagoon.git","id":13,"name":"lagoon"},
+	{"developmentEnvironmentsLimit":5,"environments":[],"gitUrl":"git@github.com:uselagoon/lagoon.git","id":13,"name":"lagoon"},
 	{"developmentEnvironmentsLimit":5,"environments":[],"gitUrl":"ssh://git@192.168.99.1:2222/git/features-subfolder.git","id":17,"name":"ci-features-subfolder"},
 	{"developmentEnvironmentsLimit":5,"environments":[
 		{"environmentType":"production","route":"http://highcotton.org"},
@@ -41,7 +41,7 @@ func TestAllProjects(t *testing.T) {
 		"gitUrl":"test","id":18,"name":"high-cotton"},
 	{"developmentEnvironmentsLimit":5,"environments":[],"gitUrl":"ssh://git@192.168.99.1:2222/git/api.git","id":21,"name":"ci-api"}
 ]`
-	var allProjectsSuccess = `{"header":["ID","ProjectName","GitURL","ProductionEnvironment","DevEnvironments"],"data":[["1","credentialstest-project1","ssh://git@192.168.99.1:2222/git/project1.git","","0/5"],["2","credentialstest-project2","ssh://git@192.168.99.1:2222/git/project2.git","","0/5"],["3","ci-github","ssh://git@192.168.99.1:2222/git/github.git","","0/5"],["4","ci-gitlab","ssh://git@192.168.99.1:2222/git/gitlab.git","","0/5"],["11","ci-nginx","ssh://git@192.168.99.1:2222/git/nginx.git","","0/5"],["12","ci-features","ssh://git@192.168.99.1:2222/git/features.git","","0/5"],["13","lagoon","git@github.com:amazeeio/lagoon.git","","0/5"],["17","ci-features-subfolder","ssh://git@192.168.99.1:2222/git/features-subfolder.git","","0/5"],["18","high-cotton","test","","4/5"],["21","ci-api","ssh://git@192.168.99.1:2222/git/api.git","","0/5"]]}`
+	var allProjectsSuccess = `{"header":["ID","ProjectName","GitURL","ProductionEnvironment","DevEnvironments"],"data":[["1","credentialstest-project1","ssh://git@192.168.99.1:2222/git/project1.git","","0/5"],["2","credentialstest-project2","ssh://git@192.168.99.1:2222/git/project2.git","","0/5"],["3","ci-github","ssh://git@192.168.99.1:2222/git/github.git","","0/5"],["4","ci-gitlab","ssh://git@192.168.99.1:2222/git/gitlab.git","","0/5"],["11","ci-nginx","ssh://git@192.168.99.1:2222/git/nginx.git","","0/5"],["12","ci-features","ssh://git@192.168.99.1:2222/git/features.git","","0/5"],["13","lagoon","git@github.com:uselagoon/lagoon.git","","0/5"],["17","ci-features-subfolder","ssh://git@192.168.99.1:2222/git/features-subfolder.git","","0/5"],["18","high-cotton","test","","4/5"],["21","ci-api","ssh://git@192.168.99.1:2222/git/api.git","","0/5"]]}`
 
 	returnResult, err := processAllProjects([]byte(allProjects))
 	if err != nil {
@@ -52,36 +52,16 @@ func TestAllProjects(t *testing.T) {
 	}
 }
 
-func TestProjectEnvironmentList(t *testing.T) {
-	var projectInfo = `{"autoIdle":1,"branches":"true","developmentEnvironmentsLimit":5,"environments":[
-	{"deployType":"branch","environmentType":"production","id":3,"name":"Master","openshiftProjectName":"high-cotton-master","route":"http://highcotton.org"},
-	{"deployType":"branch","environmentType":"development","id":4,"name":"Staging","openshiftProjectName":"high-cotton-staging","route":"https://varnish-highcotton-org-staging.us.amazee.io"},
-	{"deployType":"branch","environmentType":"development","id":5,"name":"Development","openshiftProjectName":"high-cotton-development","route":"https://varnish-highcotton-org-development.us.amazee.io"},
-	{"deployType":"pullrequest","environmentType":"development","id":6,"name":"PR-175","openshiftProjectName":"high-cotton-pr-175","route":""},
-	{"deployType":"branch","environmentType":"development","id":10,"name":"high-cotton","openshiftProjectName":"high-cotton-high-cotton","route":null}],
-	"gitUrl":"test","id":18,"name":"high-cotton","productionEnvironment":"Master","pullrequests":"true","storageCalc":1,"subfolder":null
-}`
-	var projectInfoSuccess = `{"header":["ID","Name","DeployType","Environment","OpenshiftProjectName","Route"],"data":[["3","Master","branch","production","high-cotton-master","http://highcotton.org"],["4","Staging","branch","development","high-cotton-staging","https://varnish-highcotton-org-staging.us.amazee.io"],["5","Development","branch","development","high-cotton-development","https://varnish-highcotton-org-development.us.amazee.io"],["6","PR-175","pullrequest","development","high-cotton-pr-175","none"],["10","high-cotton","branch","development","high-cotton-high-cotton","none"]]}`
-
-	returnResult, err := processEnvironmentsList([]byte(projectInfo))
-	if err != nil {
-		t.Error("Should not fail if processing succeeded", err)
-	}
-	if string(returnResult) != projectInfoSuccess {
-		checkEqual(t, string(returnResult), projectInfoSuccess, "projectInfo processing failed")
-	}
-}
-
 func TestProjectInfo(t *testing.T) {
 	var projectInfo = `
-	{"autoIdle":1,"branches":"false","developmentEnvironmentsLimit":5,"environments":[
+	{"autoIdle":1,"branches":"false","developmentEnvironmentsLimit":5,"factsUI":0,"problemsUI":0,"environments":[
 		{"deployType":"branch","environmentType":"production","id":3,"name":"Master","openshiftProjectName":"high-cotton-master","route":"http://highcotton.org"},
 		{"deployType":"branch","environmentType":"development","id":4,"name":"Staging","openshiftProjectName":"high-cotton-staging","route":"https://varnish-highcotton-org-staging.us.amazee.io"},
 		{"deployType":"branch","environmentType":"development","id":5,"name":"Development","openshiftProjectName":"high-cotton-development","route":"https://varnish-highcotton-org-development.us.amazee.io"},
 		{"deployType":"pullrequest","environmentType":"development","id":6,"name":"PR-175","openshiftProjectName":"high-cotton-pr-175","route":""},
 		{"deployType":"branch","environmentType":"development","id":10,"name":"high-cotton","openshiftProjectName":"high-cotton-high-cotton","route":null}],
-		"gitUrl":"test","id":18,"name":"high-cotton","productionEnvironment":"doopdd","pullrequests":"false","storageCalc":1,"subfolder":null}`
-	var projectInfoSuccess = `{"header":["ID","ProjectName","GitURL","Branches","PullRequests","ProductionRoute","DevEnvironments","DevEnvLimit","ProductionEnv","AutoIdle"],"data":[["18","high-cotton","test","false","false","http://highcotton.org","4/5","5","doopdd","1"]]}`
+		"gitUrl":"test","id":18,"name":"high-cotton","productionEnvironment":"doopdd","routerPattern":"${environment}-${project}.lagoon.example.com","pullrequests":"false","storageCalc":1,"subfolder":null}`
+	var projectInfoSuccess = `{"header":["ID","ProjectName","GitURL","Branches","PullRequests","ProductionRoute","DevEnvironments","DevEnvLimit","ProductionEnv","RouterPattern","AutoIdle","FactsUI","ProblemsUI"],"data":[["18","high-cotton","test","false","false","http://highcotton.org","4/5","5","doopdd","${environment}-${project}.lagoon.example.com","1","0","0"]]}`
 
 	returnResult, err := processProjectInfo([]byte(projectInfo))
 	if err != nil {
@@ -100,7 +80,7 @@ func TestProjectUpdate(t *testing.T) {
 		{"deployType":"branch","environmentType":"development","id":5,"name":"Development","openshiftProjectName":"high-cotton-development","route":"https://varnish-highcotton-org-development.us.amazee.io"},
 		{"deployType":"pullrequest","environmentType":"development","id":6,"name":"PR-175","openshiftProjectName":"high-cotton-pr-175","route":""},
 		{"deployType":"branch","environmentType":"development","id":10,"name":"high-cotton","openshiftProjectName":"high-cotton-high-cotton","route":null}],
-		"gitUrl":"test","id":18,"name":"high-cotton","productionEnvironment":"Master","pullrequests":"true","storageCalc":1,"subfolder":null}`
+		"gitUrl":"test","id":18,"name":"high-cotton","productionEnvironment":"Master","routerPattern":"${environment}-${project}.lagoon.example.com","pullrequests":"true","storageCalc":1,"subfolder":null}`
 
 	var jsonPatch = `{"branches":"false"}`
 	var updateProjectsSuccess = `{"id":18,"patch":{"branches":"false"}}`

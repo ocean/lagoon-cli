@@ -9,15 +9,31 @@ query (
         pullrequests
         privateKey
         productionEnvironment
-        activeSystemsDeploy
-        activeSystemsTask
-        activeSystemsRemove
-        activeSystemsPromote
         storageCalc
         openshiftProjectPattern
         developmentEnvironmentsLimit
         gitUrl
         autoIdle
+        factsUi
+        problemsUi
+        deployTargetConfigs {
+          branches
+          deployTarget{
+            id
+            name
+            token
+          }
+          id
+          project{
+            autoIdle
+            gitUrl
+            name
+            productionEnvironment
+            storageCalc
+          }
+          pullrequests
+          weight
+        }
         groups{
           ... on Group {
             __typename
@@ -36,14 +52,6 @@ query (
               role
             }
           }
-          {{ if apiVerGreaterThanOrEqual . "1.2.0" }}
-          ... on BillingGroup {
-            __typename
-            name
-            currency
-            billingSoftware
-          }
-          {{ end }}
         }
         notifications {
           ... on NotificationSlack {

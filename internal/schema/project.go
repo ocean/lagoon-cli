@@ -1,6 +1,6 @@
 package schema
 
-import "github.com/amazeeio/lagoon-cli/pkg/api"
+import "github.com/uselagoon/lagoon-cli/pkg/api"
 
 // AddProjectInput is based on the Lagoon API type.
 type AddProjectInput struct {
@@ -10,10 +10,6 @@ type AddProjectInput struct {
 	Subfolder                    string              `json:"subfolder,omitempty"`
 	Openshift                    uint                `json:"openshift"`
 	OpenshiftProjectPattern      string              `json:"openshiftProjectPattern,omitempty"`
-	ActiveSystemsDeploy          string              `json:"activeSystemsDeploy,omitempty"`
-	ActiveSystemsPromote         string              `json:"activeSystemsPromote,omitempty"`
-	ActiveSystemsRemove          string              `json:"activeSystemsRemove,omitempty"`
-	ActiveSystemsTask            string              `json:"activeSystemsTask,omitempty"`
 	Branches                     string              `json:"branches,omitempty"`
 	PullRequests                 string              `json:"pullrequests,omitempty"`
 	ProductionEnvironment        string              `json:"productionEnvironment"`
@@ -37,7 +33,8 @@ type Project struct {
 	// Openshift is unmarshalled during export.
 	OpenshiftID *OpenshiftID `json:"openshift,omitempty"`
 	// Groups are unmarshalled during export.
-	Groups *Groups `json:"groups,omitempty"`
+	Groups             *Groups              `json:"groups,omitempty"`
+	DeployTargetConfig []DeployTargetConfig `json:"deployTargetConfigs,omitempty"`
 }
 
 // ProjectConfig contains project configuration.
@@ -47,8 +44,6 @@ type ProjectConfig struct {
 	Notifications *ProjectNotifications `json:"notifications,omitempty"`
 	// Group are (un)marshalled during import.
 	Groups []string `json:"groups,omitempty"`
-	// BillingGroup are (un)marshalled during import.
-	BillingGroups []string `json:"billingGroups,omitempty"`
 	// Users are members of the project.
 	// Note that in Lagoon this is implemented as being a member of the
 	// project-<projectname> group.
@@ -62,6 +57,7 @@ type ProjectNotifications struct {
 	RocketChat     []string `json:"rocketChat,omitempty"`
 	Email          []string `json:"email,omitempty"`
 	MicrosoftTeams []string `json:"microsoftTeams,omitempty"`
+	Webhook        []string `json:"webhook,omitempty"`
 }
 
 // OpenshiftID is unmarshalled during export.
@@ -90,9 +86,16 @@ type AddNotificationToProjectInput struct {
 	NotificationName string               `json:"notificationName"`
 }
 
-// ProjectBillingGroupInput is based on the input to
-// addProjectToBillingGroup.
-type ProjectBillingGroupInput struct {
-	Group   GroupInput   `json:"group"`
-	Project ProjectInput `json:"project"`
+// RemoveNotificationFromProjectInput is based on the input to
+// removeNotificationFromProject.
+type RemoveNotificationFromProjectInput struct {
+	Project          string               `json:"project"`
+	NotificationType api.NotificationType `json:"notificationType"`
+	NotificationName string               `json:"notificationName"`
+}
+
+// ProjectMetadata .
+type ProjectMetadata struct {
+	Project
+	Metadata map[string]string `json:"metadata"`
 }

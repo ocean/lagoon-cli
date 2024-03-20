@@ -5,8 +5,11 @@ type SSHKeyType string
 
 // . .
 const (
-	SSHRsa     SSHKeyType = "SSH_RSA"
-	SSHEd25519 SSHKeyType = "SSH_ED25519"
+	SSHRsa      SSHKeyType = "SSH_RSA"
+	SSHEd25519  SSHKeyType = "SSH_ED25519"
+	SSHECDSA256 SSHKeyType = "ECDSA_SHA2_NISTP256"
+	SSHECDSA384 SSHKeyType = "ECDSA_SHA2_NISTP384"
+	SSHECDSA521 SSHKeyType = "ECDSA_SHA2_NISTP521"
 )
 
 // DeployType .
@@ -37,6 +40,7 @@ const (
 	RocketChatNotification     NotificationType = "ROCKETCHAT"
 	EmailNotification          NotificationType = "EMAIL"
 	MicrosoftTeamsNotification NotificationType = "MICROSOFTTEAMS"
+	WebhookNotification        NotificationType = "WEBHOOK"
 )
 
 // DeploymentStatusType .
@@ -228,12 +232,9 @@ type Project struct {
 	Name                         string                `json:"name,omitempty"`
 	GitURL                       string                `json:"gitUrl,omitempty"`
 	PrivateKey                   string                `json:"privateKey,omitempty"`
+	PublicKey                    string                `json:"publicKey,omitempty"`
 	Subfolder                    string                `json:"subfolder,omitempty"`
-	ActiveSystemsTask            string                `json:"activeSystemsTask,omitempty"`
-	ActiveSystemsDeploy          string                `json:"activeSystemsDeploy,omitempty"`
-	ActiveSystemsRemove          string                `json:"activeSystemsRemove,omitempty"`
-	ActiveSystemsPromote         string                `json:"activeSystemsPromote,omitempty"`
-	ActiveSystemsMisc            string                `json:"activeSystemsMisc,omitempty"`
+	RouterPattern                string                `json:"routerPattern,omitempty"`
 	Branches                     string                `json:"branches,omitempty"`
 	Pullrequests                 string                `json:"pullrequests,omitempty"`
 	ProductionEnvironment        string                `json:"productionEnvironment,omitempty"`
@@ -248,6 +249,8 @@ type Project struct {
 	Environments                 []Environment         `json:"environments,omitempty"`
 	Deployments                  []Deployment          `json:"deployments,omitempty"`
 	Notifications                []interface{}         `json:"notifications,omitempty"`
+	FactsUI                      *int                  `json:"factsUi,omitempty"`
+	ProblemsUI                   *int                  `json:"problemsUi,omitempty"`
 }
 
 // ProjectPatch struct.
@@ -257,11 +260,7 @@ type ProjectPatch struct {
 	GitURL                       string `json:"gitUrl,omitempty"`
 	PrivateKey                   string `json:"privateKey,omitempty"`
 	Subfolder                    string `json:"subfolder,omitempty"`
-	ActiveSystemsTask            string `json:"activeSystemsTask,omitempty"`
-	ActiveSystemsDeploy          string `json:"activeSystemsDeploy,omitempty"`
-	ActiveSystemsRemove          string `json:"activeSystemsRemove,omitempty"`
-	ActiveSystemsPromote         string `json:"activeSystemsPromote,omitempty"`
-	ActiveSystemsMisc            string `json:"activeSystemsMisc,omitempty"`
+	RouterPattern                string `json:"routerPattern,omitempty"`
 	Branches                     string `json:"branches,omitempty"`
 	Pullrequests                 string `json:"pullrequests,omitempty"`
 	ProductionEnvironment        string `json:"productionEnvironment,omitempty"`
@@ -271,6 +270,9 @@ type ProjectPatch struct {
 	OpenshiftProjectPattern      string `json:"openshiftProjectPattern,omitempty"`
 	DevelopmentEnvironmentsLimit *int   `json:"developmentEnvironmentsLimit,omitempty"`
 	Openshift                    *int   `json:"openshift,omitempty"`
+	FactsUI                      *int   `json:"factsUi,omitempty"`
+	ProblemsUI                   *int   `json:"problemsUi,omitempty"`
+	DeploymentsDisabled          *int   `json:"deploymentsDisabled,omitempty"`
 }
 
 // AddSSHKey .
@@ -650,11 +652,11 @@ type Environment struct {
 	Deleted              string                `json:"deleted,omitempty"`
 	Route                string                `json:"route,omitempty"`
 	Routes               string                `json:"routes,omitempty"`
-	MonitoringUrls       string                `json:"monitoringUrls,omitempty"`
 	EnvVariables         []EnvironmentVariable `json:"envVariables,omitempty"`
 	Backups              []Backup              `json:"backups,omitempty"`
 	Tasks                []Task                `json:"tasks,omitempty"`
 	Project              int                   `json:"project,omitempty"`
+	AdvancedTasks        []AdvancedTask        `json:"advancedTasks"`
 }
 
 // EnvironmentBackups struct.
@@ -674,6 +676,13 @@ type EnvironmentVariable struct {
 	Name  string `json:"name,omitempty"`
 	Scope string `json:"scope,omitempty"`
 	Value string `json:"value,omitempty"`
+}
+
+// AdvancedTask task def struct
+type AdvancedTask struct {
+	ID          int    `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description"`
 }
 
 // Backup struct.

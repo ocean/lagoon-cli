@@ -1,9 +1,9 @@
 package users
 
 import (
-	"github.com/amazeeio/lagoon-cli/internal/lagoon"
-	"github.com/amazeeio/lagoon-cli/pkg/api"
-	"github.com/amazeeio/lagoon-cli/pkg/graphql"
+	"github.com/uselagoon/lagoon-cli/internal/lagoon"
+	"github.com/uselagoon/lagoon-cli/pkg/api"
+	"github.com/uselagoon/lagoon-cli/pkg/graphql"
 )
 
 // Users .
@@ -23,10 +23,8 @@ type Client interface {
 	ListUsers(string) ([]byte, error)
 	AddUser(api.User) ([]byte, error)
 	AddSSHKeyToUser(api.User, api.SSHKey) ([]byte, error)
-	DeleteSSHKey(string) ([]byte, error)
 	DeleteUser(api.User) ([]byte, error)
 	ModifyUser(api.User, api.User) ([]byte, error)
-	ListUserSSHKeys(string, string, bool) ([]byte, error)
 	ListGroups(string) ([]byte, error)
 	ListGroupProjects(string, bool) ([]byte, error)
 }

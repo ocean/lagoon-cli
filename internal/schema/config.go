@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"unicode"
 
-	"github.com/amazeeio/lagoon-cli/pkg/api"
+	"github.com/uselagoon/lagoon-cli/pkg/api"
 	"sigs.k8s.io/yaml"
 )
 
@@ -14,11 +14,10 @@ import (
 // Fields for comprising structs are dictated by the add* Lagoon APIs.
 type Config struct {
 	// API objects
-	Projects      []ProjectConfig        `json:"projects,omitempty"`
-	Groups        []GroupConfig          `json:"groups,omitempty"`
-	BillingGroups []AddBillingGroupInput `json:"billingGroups,omitempty"`
-	Users         []User                 `json:"users,omitempty"`
-	Notifications *NotificationsConfig   `json:"notifications,omitempty"`
+	Projects      []ProjectConfig      `json:"projects,omitempty"`
+	Groups        []GroupConfig        `json:"groups,omitempty"`
+	Users         []User               `json:"users,omitempty"`
+	Notifications *NotificationsConfig `json:"notifications,omitempty"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler interface to control how lagoon
@@ -33,8 +32,11 @@ func (c *Config) UnmarshalJSON(data []byte) error {
 	}
 	// post-process the unmarshaled object to Lagoon API requirements
 	sshKeyType := map[api.SSHKeyType]api.SSHKeyType{
-		"ssh-rsa":     api.SSHRsa,
-		"ssh-ed25519": api.SSHEd25519,
+		"ssh-rsa":             api.SSHRsa,
+		"ssh-ed25519":         api.SSHEd25519,
+		"ecdsa-sha2-nistp256": api.SSHECDSA256,
+		"ecdsa-sha2-nistp384": api.SSHECDSA384,
+		"ecdsa-sha2-nistp521": api.SSHECDSA521,
 	}
 	for _, user := range uc.Users {
 		for j, sshKey := range user.SSHKeys {
@@ -52,12 +54,12 @@ func (c *Config) UnmarshalJSON(data []byte) error {
 		"production":  api.ProductionEnv,
 		"development": api.DevelopmentEnv,
 	}
-	envVarScope := map[api.EnvVariableScope]api.EnvVariableScope{
-		"build":                       api.BuildVar,
-		"runtime":                     api.RuntimeVar,
-		"global":                      api.GlobalVar,
-		"internal_container_registry": api.InternalContainerRegistryVar,
-		"container_registry":          api.ContainerRegistryVar,
+	envVarScope := map[EnvVariableScope]EnvVariableScope{
+		"build":                       BuildVar,
+		"runtime":                     RuntimeVar,
+		"global":                      GlobalVar,
+		"internal_container_registry": InternalContainerRegistryVar,
+		"container_registry":          ContainerRegistryVar,
 	}
 	for _, project := range uc.Projects {
 		for j, ev := range project.EnvVariables {
@@ -100,6 +102,7 @@ func ProjectsToConfig(
 	for _, project := range projects {
 		projectConfig :=
 			ProjectConfig{Project: project, Notifications: &ProjectNotifications{}}
+
 		for _, group := range project.Groups.Groups {
 			// project group users are appended to the project directly because this
 			// group is automatically created in Lagoon.
@@ -151,18 +154,6 @@ func ProjectsToConfig(
 			}
 			config.Groups = append(config.Groups, newGroup)
 		}
-		// add billing groups
-		for _, billingGroup := range project.Groups.BillingGroups {
-			projectConfig.BillingGroups =
-				append(projectConfig.BillingGroups, billingGroup.Name)
-			// skip creating the group if already done
-			if groups[billingGroup.Name] {
-				continue // next group
-			}
-			groups[billingGroup.Name] = true
-			config.BillingGroups =
-				append(config.BillingGroups, billingGroup.AddBillingGroupInput)
-		}
 		// add notifications
 		for _, n := range project.Notifications.Slack {
 			projectConfig.Notifications.Slack =
@@ -207,6 +198,7 @@ func ProjectsToConfig(
 			config.Notifications.MicrosoftTeams =
 				append(config.Notifications.MicrosoftTeams, n)
 		}
+
 		minimiseProjectConfig(&projectConfig, exclude)
 		config.Projects = append(config.Projects, projectConfig)
 	}
@@ -261,18 +253,6 @@ func minimiseProjectConfig(p *ProjectConfig, exclude map[string]bool) {
 
 	// don't set options if they're already set to default values
 	defaults := projectDefaults()
-	if p.ActiveSystemsDeploy == defaults.ActiveSystemsDeploy {
-		p.ActiveSystemsDeploy = ""
-	}
-	if p.ActiveSystemsPromote == defaults.ActiveSystemsPromote {
-		p.ActiveSystemsPromote = ""
-	}
-	if p.ActiveSystemsRemove == defaults.ActiveSystemsRemove {
-		p.ActiveSystemsRemove = ""
-	}
-	if p.ActiveSystemsTask == defaults.ActiveSystemsTask {
-		p.ActiveSystemsTask = ""
-	}
 	if p.PullRequests == defaults.PullRequests {
 		p.PullRequests = ""
 	}
@@ -307,16 +287,12 @@ func minimiseConfig(c *Config, exclude map[string]bool) {
 
 // projectDefaults returns default Project values.
 func projectDefaults() *ProjectConfig {
-	// see https://github.com/amazeeio/lagoon/blob/
+	// see https://github.com/uselagoon/lagoon/blob/
 	// 817def93b3e15f5d96aa44e2b7bd33c15f18bd43
 	// services/api/src/resources/project/resolvers.js#L233
 	return &ProjectConfig{
 		Project: Project{
 			AddProjectInput: AddProjectInput{
-				ActiveSystemsDeploy:          "lagoon_openshiftBuildDeploy",
-				ActiveSystemsPromote:         "lagoon_openshiftBuildDeploy",
-				ActiveSystemsRemove:          "lagoon_openshiftRemove",
-				ActiveSystemsTask:            "lagoon_openshiftJob",
 				PullRequests:                 "true",
 				Branches:                     "true",
 				DevelopmentEnvironmentsLimit: 5,

@@ -1,21 +1,49 @@
 site_name: 'Lagoon CLI'
+site_url: https://uselagoon.github.io/lagoon-cli/
+repo_url: https://github.com/uselagoon/lagoon-cli/
+repo_name: uselagoon/lagoon-cli
+edit_uri: edit/main/docs
+site_author: The Lagoon Authors
+
 theme:
   name: 'material'
   palette:
-    primary: 'blue'
-    accent: 'light blue'
+    # Palette toggle for light mode
+    - primary: 'blue'
+      accent: 'light blue'
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: 'blue'
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
   favicon: lagoon-cli-logo.png
   icon:
     logo: fontawesome/solid/terminal
+    repo: fontawesome/brands/github  
+    
+extra:
+  analytics:
+    provider: google
+    property: G-W1SJFEVFDB
+
 markdown_extensions:
-  - codehilite
-  - admonition
-  - attr_list
   - toc:
       permalink: "#"
       baselevel: 2
-      separator: "_"
-pages:
+  - admonition
+  - attr_list
+  - tables
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+plugins:
+  - search
+
+nav:
   - Getting Started: index.md
   - Configuration: config.md
   - Commands: commands/lagoon.md

@@ -1,10 +1,9 @@
-//go:generate go-bindata -pkg lgraphql -o lgraphql/lgraphql.go -nometadata _lgraphql/
-
 // Package client implements the interfaces required by the parent lagoon
 // package.
 package client
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,10 +11,12 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/amazeeio/lagoon-cli/internal/lagoon/client/lgraphql"
 	"github.com/hashicorp/go-version"
 	"github.com/machinebox/graphql"
 )
+
+//go:embed _lgraphql/*
+var lgraphql embed.FS
 
 // Client implements the lagoon package interfaces for the Lagoon GraphQL API.
 type Client struct {
@@ -57,7 +58,7 @@ func New(endpoint, token, apiVersion string, cliVersion string, debug bool) *Cli
 func (c *Client) newRequest(
 	assetName string, varStruct interface{}) (*graphql.Request, error) {
 
-	q, err := lgraphql.Asset(assetName)
+	q, err := lgraphql.ReadFile(assetName)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't get asset: %w", err)
 	}
@@ -71,7 +72,7 @@ func (c *Client) newRequest(
 func (c *Client) newVersionedRequest(
 	assetName string, varStruct interface{}) (*graphql.Request, error) {
 
-	q, err := lgraphql.Asset(assetName)
+	q, err := lgraphql.ReadFile(assetName)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't get asset: %w", err)
 	}

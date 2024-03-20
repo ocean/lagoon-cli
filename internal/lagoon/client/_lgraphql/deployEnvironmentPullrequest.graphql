@@ -5,7 +5,9 @@ mutation (
   $baseBranchName: String!,
   $baseBranchRef: String!,
   $headBranchName: String!,
-  $headBranchRef: String!) {
+  $headBranchRef: String!,
+  $returnData: Boolean!,
+  $buildVariables: [EnvKeyValueInput]) {
     deployEnvironmentPullrequest(input: {
       project: $project
       number: $number
@@ -14,6 +16,8 @@ mutation (
       baseBranchRef: $baseBranchRef
       headBranchName: $headBranchName
       headBranchRef: $headBranchRef
+      returnData: $returnData
+      buildVariables: $buildVariables
     }
   )
 }

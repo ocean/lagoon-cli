@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
@@ -41,7 +40,7 @@ func publicKey(path string, skipAgent bool) (ssh.AuthMethod, func() error) {
 		}
 	}
 
-	key, err := ioutil.ReadFile(path)
+	key, err := os.ReadFile(path)
 	handleError(err)
 
 	// Try to look for an unencrypted private key
@@ -65,8 +64,30 @@ func publicKey(path string, skipAgent bool) (ssh.AuthMethod, func() error) {
 }
 
 func loginToken() error {
+	out, err := retrieveTokenViaSsh()
+	if err != nil {
+		return err
+	}
+
+	lc := lagoonCLIConfig.Lagoons[lagoonCLIConfig.Current]
+	lc.Token = out
+	lagoonCLIConfig.Lagoons[lagoonCLIConfig.Current] = lc
+	if err = writeLagoonConfig(&lagoonCLIConfig, filepath.Join(configFilePath, configName+configExtension)); err != nil {
+		return fmt.Errorf("couldn't write config: %v", err)
+	}
+
+	return nil
+}
+
+func retrieveTokenViaSsh() (string, error) {
 	skipAgent := false
 	privateKey := fmt.Sprintf("%s/.ssh/id_rsa", userPath)
+	// if the user has a key defined in their lagoon cli config, use it
+	if lagoonCLIConfig.Lagoons[lagoonCLIConfig.Current].SSHKey != "" {
+		privateKey = lagoonCLIConfig.Lagoons[lagoonCLIConfig.Current].SSHKey
+		skipAgent = true
+	}
+	// otherwise check if one has been provided by the override flag
 	if cmdSSHKey != "" {
 		privateKey = cmdSSHKey
 		skipAgent = true
@@ -82,30 +103,22 @@ func loginToken() error {
 	defer closeSSHAgent()
 
 	sshHost := fmt.Sprintf("%s:%s",
-		lagoonCLIConfig.Lagoons[cmdLagoon].HostName,
-		lagoonCLIConfig.Lagoons[cmdLagoon].Port)
+		lagoonCLIConfig.Lagoons[lagoonCLIConfig.Current].HostName,
+		lagoonCLIConfig.Lagoons[lagoonCLIConfig.Current].Port)
 	conn, err := ssh.Dial("tcp", sshHost, config)
 	if err != nil {
-		return fmt.Errorf("couldn't connect to %s: %v", sshHost, err)
+		return "", fmt.Errorf("couldn't connect to %s: %v", sshHost, err)
 	}
 	defer conn.Close()
 
 	session, err := conn.NewSession()
 	if err != nil {
-		return fmt.Errorf("couldn't open session: %v", err)
+		return "", fmt.Errorf("couldn't open session: %v", err)
 	}
 
 	out, err := session.CombinedOutput("token")
 	if err != nil {
-		return fmt.Errorf("couldn't get token: %v", err)
+		return "", fmt.Errorf("couldn't get token: %v", err)
 	}
-
-	lc := lagoonCLIConfig.Lagoons[cmdLagoon]
-	lc.Token = strings.TrimSpace(string(out))
-	lagoonCLIConfig.Lagoons[cmdLagoon] = lc
-	if err = writeLagoonConfig(&lagoonCLIConfig, filepath.Join(configFilePath, configName+configExtension)); err != nil {
-		return fmt.Errorf("couldn't write config: %v", err)
-	}
-
-	return nil
+	return strings.TrimSpace(string(out)), err
 }

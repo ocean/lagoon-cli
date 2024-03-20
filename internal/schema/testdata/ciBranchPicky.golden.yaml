@@ -1,6 +1,8 @@
 groups:
 - name: ci-group
   users:
+  - email: ci-customer-user-ecdsa521@example.com
+    role: OWNER
   - email: ci-customer-user-ed25519@example.com
     role: OWNER
   - email: ci-customer-user-rsa@example.com
@@ -8,30 +10,53 @@ groups:
 projects:
 - autoIdle: 1
   branches: ^feature/|^(dev|test|develop|master)$
+  deployTargetConfigs:
+  - branches: qa
+    deployTarget:
+      id: 157
+      name: test.amazee.io
+      token: test
+    id: 2094
+    project:
+      autoIdle: 1
+      gitUrl: ssh://git@bitbucket.biscrum.com:7999/wpsites/test.git
+      name: test-template
+      productionEnvironment: master
+      storageCalc: 1
+    pullrequests: "false"
+    weight: 102
   environments:
   - autoIdle: 1
     deployBaseRef: master
     deployType: branch
     environmentType: production
     name: master
+    openshift:
+      id: 1
     openshiftProjectName: ci-branch-picky
   - autoIdle: 1
     deployBaseRef: develop
     deployType: branch
     environmentType: development
     name: develop
+    openshift:
+      id: 1
     openshiftProjectName: ci-branch-picky
   - autoIdle: 1
     deployBaseRef: stage
     deployType: branch
     environmentType: development
     name: stage
+    openshift:
+      id: 1
     openshiftProjectName: ci-branch-picky
   - autoIdle: 1
     deployBaseRef: banana
     deployType: branch
     environmentType: development
     name: banana
+    openshift:
+      id: 1
     openshiftProjectName: ci-branch-picky
   gitUrl: ssh://git@192.168.42.1:2222/git/node.git
   groups:
@@ -43,6 +68,13 @@ projects:
   - email: ci-customer-user-rsa@example.com
     role: MAINTAINER
 users:
+- email: ci-customer-user-ecdsa521@example.com
+  sshKeys:
+  - created: "2020-02-11 09:00:42"
+    keyFingerprint: ""
+    keyType: ecdsa-sha2-nistp521
+    keyValue: AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1MjEAAACFBAFAX0rkOBwlrXr2rJNxYVi0fRj8IiHBaFCsAM0zO+o2fh+h4EuL1Mx4F237SX5G0zuL8R6Sbf9LrY2lhKZdDpiFdgF7pP1TZ8RuDvKgasppGDEzAIm9+7bmHR118CejWF7llgHD3oz+/aRHTZVpOOaCyTGkF2oPeUejrI74KoPHk3HHpQ==
+    name: ci-customer-sshkey-ecdsa-nistp521
 - email: ci-customer-user-ed25519@example.com
   sshKeys:
   - created: "2020-02-11 09:00:42"
